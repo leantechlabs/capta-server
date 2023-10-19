@@ -11,15 +11,19 @@ const port = process.env.PORT || 3000;
 // Middleware
 app.use(bodyParser.json());
 app.use(cors());
+const DBurl= "mongodb+srv://"+process.env.DB_NAME+":"+process.env.DB_NAME+"@cluster0.9fiyo2y.mongodb.net/?retryWrites=true&w=majority";
+// Replace this with your MongoDB Atlas connection URLtalas
+// Connect to MongoDB Atlas
+mongoose.connect(DBurl,{ useNewUrlParser: true, useUnifiedTopology: true });
 
-// MongoDB connection
-// mongoose.connect('mongodb://localhost:27017/captaDB', { useNewUrlParser: true, useUnifiedTopology: true });
-// const connection = mongoose.connection;
+const db = mongoose.connection;
 
-// connection.once('open', () => {
-//     console.log('MongoDB database connection established successfully');
-// });
-
+// Event handlers for Mongoose connection
+db.on('error', console.error.bind(console, 'MongoDB connection error:'));
+db.once('open', function () {
+  console.log('Connected to MongoDB Atlas');
+  //
+});
 // Example API routes
 //const userRouter = require('./routes/user');
 app.get('/',(req,res)=>{
