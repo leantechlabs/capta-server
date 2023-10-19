@@ -29,6 +29,9 @@ db.once('open', function () {
 app.get('/',(req,res)=>{
     res.send({Message:"Server is Live"});
 })
+app.get('/login',(req,res)=>{
+    res.send({Message:"Login Page"});
+})
 app.listen(port, () => {
     console.log(`Server is running on port: ${port}`);
 });
