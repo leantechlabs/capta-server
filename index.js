@@ -6,5 +6,5 @@ app.use("/",(req,res)=>{
   res.json({message:"Server is Running "});
 });
 app.listen(3000,()=>{
-  console.log(`server running on http://localhost:${port}`)
+  console.log(`server running on https://capta-server.vercel.app/:${port}`)
 })
