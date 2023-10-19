@@ -22,7 +22,9 @@ app.use(cors());
 
 // Example API routes
 //const userRouter = require('./routes/user');
-
+app.get('/',(req,res)=>{
+    res.send({Message:"Server is Live"});
+})
 app.listen(port, () => {
     console.log(`Server is running on port: ${port}`);
 });
