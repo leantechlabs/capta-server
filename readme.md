@@ -19,7 +19,7 @@ This project is developed by LeanTech Labs.
    Clone the repository to your local machine. Replace `[YOUR_USERNAME]` with your GitHub username.
 
    ```bash
-   git clone https://github.com/[YOUR_USERNAME]/captaV2.git
+
 
 3.**Install Dependencies**
      npm install
