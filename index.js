@@ -32,6 +32,17 @@ app.get('/',(req,res)=>{
 app.get('/login',(req,res)=>{
     res.send({Message:"Login Page"});
 })
+app.get('/login',(req,res)=>{
+    res.send({Message:"Login Page"});
+})
+app.post('/User/addUser', (req, res) => {
+    // Print the received data to the console
+    console.log('Received data:', req.body);
+  
+    // Send a response to the client
+    res.json({ message: 'Data received successfully' });
+  });
+  
 app.listen(port, () => {
     console.log(`Server is running on port: ${port}`);
 });
