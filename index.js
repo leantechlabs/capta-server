@@ -35,7 +35,15 @@ app.get('/login',(req,res)=>{
 app.get('/login',(req,res)=>{
     res.send({Message:"Login Page"});
 })
-app.post('/User/addUser', (req, res) => {
+app.post('/user/add', (req, res) => {
+    // Print the received data to the console
+    console.log('Received data:', req.body);
+  
+    // Send a response to the client
+    res.json({ message: 'Data received successfully' });
+  });
+  
+  app.post('/college/add', (req, res) => {
     // Print the received data to the console
     console.log('Received data:', req.body);
   
