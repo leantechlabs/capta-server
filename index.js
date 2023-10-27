@@ -7,6 +7,11 @@ import cors from 'cors';
 
 const app = express();
 const port = process.env.PORT || 3000;
+const corsOptions = {
+  origin: process.env.ORIGIN,
+  methods: 'GET,POST',
+  allowedHeaders: 'Content-Type,Authorization,Custom-Header',
+};
 
 // Middleware
 app.use(bodyParser.json());
