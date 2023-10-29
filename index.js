@@ -10,9 +10,14 @@ const app = express();
 const port = process.env.PORT || 3000;
 const corsOptions = {
   origin: process.env.ORIGIN,
-  methods: 'GET,POST',
-  allowedHeaders: 'Content-Type,Authorization,Custom-Header',
+  methods: 'GET, POST, PUT, DELETE',
+  allowedHeaders: 'Content-Type, Authorization, Custom-Header',
+  exposedHeaders: ['Custom-Header'],
+  credentials: true,
+  maxAge: 3600,
+  optionsSuccessStatus: 200,
 };
+
 
 
 app.use(bodyParser.json());
@@ -159,8 +164,16 @@ app.post('/user/manage', async (req, res) => {
     res.status(500).json({ error: 'Internal server error' });
   }
 });
-
-
+//test purpose
+app.get('/user/manage', async (req, res) => {
+  try {
+    const users = await User.find({},{password:0});
+    res.json(users);
+  } catch (error) {
+    console.error('Error fetching users:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
   
   app.post('/session/attendance', (req, res) => {
     // Print the received data to the console
@@ -181,3 +194,4 @@ app.post('/user/manage', async (req, res) => {
 app.listen(port, () => {
     console.log(`Server is running on port: ${port}`);
 });
+
