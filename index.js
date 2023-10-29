@@ -59,7 +59,23 @@ const UserSchema = new mongoose.Schema({
     },
   ],
 });
-//schema Objects
+const institutionSchema = new mongoose.Schema({
+  collegeName: String,
+  eamcetCode: String,
+  gstNumber: String,
+  panNumber: String,
+  email: String,
+  phoneNumber: String,
+  address: String,
+  city: String,
+  country: String,
+  postalCode: String,
+  chairmanName: String,
+  chairmanEmail: String,
+  chairmanPhoneNumber: String,
+});
+
+const Institution = mongoose.model('Institution', institutionSchema);
 const User = mongoose.model('user', UserSchema);
 
 //
@@ -164,17 +180,29 @@ app.post('/user/manage', async (req, res) => {
     res.status(500).json({ error: 'Internal server error' });
   }
 });
-//test purpose
-app.get('/user/manage', async (req, res) => {
+// adding an institution
+app.post('/college/add', async (req, res) => {
   try {
-    const users = await User.find({},{password:0});
-    res.json(users);
+    const institutionData = req.body;
+    const newInstitution = new Institution(institutionData);
+    await newInstitution.save();
+    res.status(200).json({ message: 'Institution added successfully' });
   } catch (error) {
-    console.error('Error fetching users:', error);
+    // console.error('Error adding institution:', error);
+    res.status(500).json({error: 'Internal server error' });
+  }
+});
+app.post('/college/manage', async (req, res) => {
+  try {
+    const colleges = await Institution.find({}, 'collegeName eamcetCode email phoneNumber');
+
+    res.json(colleges);
+  } catch (error) {
+    console.error('Error fetching colleges:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
-  
+
   app.post('/session/attendance', (req, res) => {
     // Print the received data to the console
     console.log('Received data:', req.body);
