@@ -63,6 +63,14 @@ app.post('/user/add', (req, res) => {
     // Send a response to the client
     res.json({ message: 'Data received successfully' });
   });
+
+  app.post('/curriculum/create', (req, res) => {
+    // Print the received data to the console
+    console.log('Received data:', req.body);
+  
+    // Send a response to the client
+    res.json({ message: 'Data received successfully' });
+  });
   
 app.listen(port, () => {
     console.log(`Server is running on port: ${port}`);
