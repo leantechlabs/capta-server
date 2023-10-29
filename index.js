@@ -26,15 +26,40 @@ db.once('open', function () {
   console.log('Connected to MongoDB Atlas');
   //
 });
-const userSchema = new mongoose.Schema({
+//schemas
+const UserSchema = new mongoose.Schema({
   username: String,
   email: String,
+  userId: String,
+  phoneNumber: String,
+  address: String,
+  city: String,
+  country: String,
+  postalCode: String,
+  resume: String,
+  adhar: String,
+  pan: String,
   password: String,
-  role:String,
-  userId:String,
+  photo: String,
+  role: String,
+  trainerType: String,
+  skills: String,
+  salary: String,
+  bankAccounts: [
+    {
+      bankName: String,
+      branchCode: String,
+      accountNumber: String,
+      ifscNumber: String,
+    },
+  ],
 });
+//schema Objects
+const User = mongoose.model('user', UserSchema);
 
-const User = mongoose.model('user', userSchema);
+//
+
+
 
 // // Registration route
 // app.post('/register', async (req, res) => {
@@ -91,23 +116,51 @@ app.post('/login', async (req, res) => {
 });
 
 
+app.post('/user/add', async (req, res) => {
+  const userData = req.body;
+  const email= req.body.email;
+  const existingUser = await User.findOne({ email: email });
+  try {
+    if (existingUser) {
+      return res.status(400).json({ message: 'Email already in use' });
+        }
+
+    if (!userData.trainerType){
+      userData.role="1"
+    }else{
+      userData.role="2"
+    }
+    if (!userData.password) {
+      userData.password = 'Capta@123';
+    }
+    const saltRounds = 10; 
+    const hashedPassword = await bcrypt.hash(userData.password, saltRounds);
+
+    const newUser = new User({
+      ...userData,
+      password: hashedPassword,
+    });
+    await newUser.save();
+
+    res.status(200).json({ message: 'User added successfully' });
+  } catch (error) {
+    console.error('Error adding user:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+app.post('/user/manage', async (req, res) => {
+  try {
+    // Exclude users with the role "admin"
+    const users = await User.find({ role: { $ne: 'admin' } }, { password: 0 });
+    res.json(users);
+  } catch (error) {
+    console.error('Error fetching users:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
 
 
-app.post('/user/add', (req, res) => {
-    // Print the received data to the console
-    console.log('Received data:', req.body);
-  
-    // Send a response to the client
-    res.json({ message: 'Data received successfully' });
-  });
-  
-  app.post('/college/add', (req, res) => {
-    // Print the received data to the console
-    console.log('Received data:', req.body);
-  
-    // Send a response to the client
-    res.json({ message: 'Data received successfully' });
-  });
   
   app.post('/session/attendance', (req, res) => {
     // Print the received data to the console
