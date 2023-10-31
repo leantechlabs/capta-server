@@ -75,8 +75,76 @@ const institutionSchema = new mongoose.Schema({
   chairmanPhoneNumber: String,
 });
 
+const MOUSchema = new mongoose.Schema({
+  Date:String,
+  Location: String,
+  FirstParty: [{
+    Name: String,
+    Address: String,
+    Representative: String ,
+    Contact: String
+  },
+],
+
+  SecondParty:[ { Name: String, Location: String, Representative: String },],
+  TermsConditions: [{
+    NatureRelationship: String,
+    MutualObligation: String,
+    LimitationsWarranties: String,
+  },],
+  PurposeScope: [{ Details: String, CollaborationPeriod: String, OtherDetails: String },],
+  PaymentTerms: [{
+    AmountPerStudent: String,
+    PaymentSchedule: String,
+    PaymentMethod: String,
+  },],
+  Termination: [{ TerminationConditions: String, PaymentDue: String },],
+}
+ 
+);
+
+const curriculumSchema = new mongoose.Schema({
+  CurriculumName: String,
+  excelData: [
+    {
+      engine: String,
+      top_p: String,
+      temp: String,
+      max_tokens: String,
+      prompt: String,
+      output:String,
+      elapsed_time: String
+    },
+    {
+      engine: String,
+      top_p: String,
+      temp: String,
+      max_tokens: String,
+      prompt: String,
+      output:String,
+      elapsed_time: String
+    },
+    {
+      engine: String,
+      top_p: String,
+      temp: String,
+      max_tokens: String,
+      prompt: String,
+      output:String,
+      elapsed_time: String
+    }
+  ]
+})
+
+
+
 const Institution = mongoose.model('Institution', institutionSchema);
 const User = mongoose.model('user', UserSchema);
+
+
+const Mou = mongoose.model('MOU' , MOUSchema);
+
+const Curriculum = mongoose.model( 'cur',curriculumSchema)
 
 //
 
@@ -218,8 +286,78 @@ app.post('/college/manage', async (req, res) => {
     // Send a response to the client
     res.json({ message: 'Data received successfully' });
   });
+
+  
+ app.post('/mou/create', async (req, res) => {
+  try {
+    const MouData = req.body;
+    const newMou = new Mou(MouData);
+    await newMou.save();
+    res.status(200).json({ message: 'Mou added successfully' });
+  } catch (error) {
+    
+    // console.error('Error adding institution:', error);
+    res.status(500).json({error: 'Internal server error' });
+  }
+});
+
+app.post('/mou/confirm', async (req, res) => {
+  try {
+    const confirmationStatus = req.body;
+    const confirmed = new Mou(confirmationStatus);
+    await confirmed.save();
+    res.status(200).json({ message: 'MOU confirmation submitted successfully' });
+  } catch (error) {
+
+    res.status(500).json({error: 'MOU confirmation not Submitted' });
+  }
+});
+
+app.post('/mou/manage', async (req, res) => {
+  try {
+    const action = req.body.action; 
+    const itemId = req.body.itemId; 
+    const updatedStatus = req.body.status; 
+
+    
+    const items = [
+      { id: 1, name: 'Item 1', status: 'Pending' },
+      { id: 2, name: 'Item 2', status: 'Confirmed' },
+      { id: 3, name: 'Item 3', status: 'Rejected' },
+    ];
+
+    if (action === 'edit') {
+
+      const itemToEdit = items.find(item => item.id === itemId);
+      if (itemToEdit) {
+        itemToEdit.status = updatedStatus;
+        res.send(`Item with ID ${itemId} has been updated.`);
+      } else {
+        res.send(`Item with ID ${itemId} not found.`);
+      }
+    } else if (action === 'delete') {
+     
+      const indexToDelete = items.findIndex(item => item.id === itemId);
+      if (indexToDelete !== -1) {
+        items.splice(indexToDelete, 1);
+        res.send(`Item with ID ${itemId} has been deleted.`);
+      } else {
+        res.send(`Item with ID ${itemId} not found.`);
+      }
+    } else {
+      
+      res.send(`Unsupported action: ${action}`);
+    }
+  } catch (error) {
+    
+    console.error(error);
+    res.status(500).send('An error occurred');
+  }
+});
   
 app.listen(port, () => {
     console.log(`Server is running on port: ${port}`);
 });
+
+
 
