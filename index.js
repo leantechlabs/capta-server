@@ -5,9 +5,11 @@ import mongoose from 'mongoose';
 import bodyParser from 'body-parser';
 import cors from 'cors';
 import bcrypt from 'bcryptjs';
+import Institution from './models/college.model.js';
 
 const app = express();
-const port = process.env.PORT || 3000;
+// const port = process.env.PORT || 3000;
+const port = 3000
 const corsOptions = {
   origin: process.env.ORIGIN,
   methods: 'GET, POST, PUT, DELETE',
@@ -23,6 +25,7 @@ const corsOptions = {
 app.use(bodyParser.json());
 app.use(cors()); //mongodb+srv://captadb:captadb@cluster0.9fiyo2y.mongodb.net/?retryWrites=true&w=majority
 const DBurl = "mongodb+srv://" + process.env.DB_NAME + ":" + process.env.DB_NAME + "@cluster0.9fiyo2y.mongodb.net/capta?retryWrites=true&w=majority";
+
 mongoose.connect(DBurl,{ useNewUrlParser: true, useUnifiedTopology: true });
 
 const db = mongoose.connection;
@@ -59,21 +62,6 @@ const UserSchema = new mongoose.Schema({
     },
   ],
 });
-const institutionSchema = new mongoose.Schema({
-  collegeName: String,
-  eamcetCode: String,
-  gstNumber: String,
-  panNumber: String,
-  email: String,
-  phoneNumber: String,
-  address: String,
-  city: String,
-  country: String,
-  postalCode: String,
-  chairmanName: String,
-  chairmanEmail: String,
-  chairmanPhoneNumber: String,
-});
 
 const CurriculumSchema = new mongoose.Schema({
   
@@ -101,10 +89,6 @@ const ModuleSchema = new mongoose.Schema({
 });
 
 
-
-
-
-const Institution = mongoose.model('Institution', institutionSchema);
 const User = mongoose.model('user', UserSchema);
 const Curriculum = mongoose.model('Curriculum', CurriculumSchema);
 const Module = mongoose.model('Module' , ModuleSchema);
@@ -219,10 +203,10 @@ app.post('/college/add', async (req, res) => {
     const institutionData = req.body;
     const newInstitution = new Institution(institutionData);
     await newInstitution.save();
-    res.status(200).json({ message: 'Institution added successfully' });
+    res.status(200).json({ message: "Institution added successfully" });
   } catch (error) {
     // console.error('Error adding institution:', error);
-    res.status(500).json({error: 'Internal server error' });
+    res.status(500).json({ error: "Internal server error" });
   }
 });
 app.post('/college/manage', async (req, res) => {
