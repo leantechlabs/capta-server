@@ -1,6 +1,6 @@
 import express from require('express');
 
-const {mouCreate}= require('.')
+const {mouCreate}= require('../models/user.model')
 
 const router = express.Router();
 
