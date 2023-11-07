@@ -1,10 +1,18 @@
 import dotenv from 'dotenv'
 dotenv.config(); 
 import express from 'express';
-import mongoose from 'mongoose';
+import mongoose, { connect } from 'mongoose';
 import bodyParser from 'body-parser';
 import cors from 'cors';
 import bcrypt from 'bcryptjs';
+import session from 'express-session';
+import flash from 'connect-flash';
+// import passport from './routes/auth';
+import passport from 'passport';
+import { Strategy as LocalStrategy } from 'passport-local';
+import jwt from 'jsonwebtoken'; 
+import cookieParser from 'cookie-parser'; 
+
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -18,10 +26,10 @@ const corsOptions = {
   optionsSuccessStatus: 200,
 };
 
-
-
+app.use(cookieParser()); 
 app.use(bodyParser.json());
-app.use(cors()); //mongodb+srv://captadb:captadb@cluster0.9fiyo2y.mongodb.net/?retryWrites=true&w=majority
+app.use(session({ secret: 'your-secret-key', resave: false, saveUninitialized: true }));
+app.use(cors({ origin: 'http://localhost:3000', credentials: true })); //mongodb+srv://captadb:captadb@cluster0.9fiyo2y.mongodb.net/?retryWrites=true&w=majority
 const DBurl = "mongodb+srv://" + process.env.DB_NAME + ":" + process.env.DB_NAME + "@cluster0.9fiyo2y.mongodb.net/capta?retryWrites=true&w=majority";
 mongoose.connect(DBurl,{ useNewUrlParser: true, useUnifiedTopology: true });
 
@@ -31,34 +39,86 @@ db.once('open', function () {
   console.log('Connected to MongoDB Atlas');
   //
 });
-//schemas
-const UserSchema = new mongoose.Schema({
-  username: String,
+
+app.use(flash());
+app.use(passport.initialize());
+app.use(passport.session());
+
+
+const User = mongoose.model('User', new mongoose.Schema({
   email: String,
-  userId: String,
-  phoneNumber: String,
-  address: String,
-  city: String,
-  country: String,
-  postalCode: String,
-  resume: String,
-  adhar: String,
-  pan: String,
   password: String,
-  photo: String,
-  role: String,
-  trainerType: String,
-  skills: String,
-  salary: String,
-  bankAccounts: [
-    {
-      bankName: String,
-      branchCode: String,
-      accountNumber: String,
-      ifscNumber: String,
-    },
-  ],
+  role:String,
+}));
+passport.use(new LocalStrategy({
+  usernameField: 'email', 
+  passwordField: 'password' 
+},
+  async (email, password, done) => {
+    try {
+      const user = await User.findOne({ email });
+
+      if (!user) {
+        return done(null, false, { message: 'Incorrect username.' });
+      }
+
+      const passwordMatch = await bcrypt.compare(password, user.password);
+
+      if (!passwordMatch) {
+        return done(null, false, { message: 'Incorrect password.' });
+      }
+      return done(null, user);
+    } catch (err) {
+      return done(err);
+    }
+  }
+));
+
+passport.serializeUser((user, done) => {
+  done(null, user.id);
 });
+passport.deserializeUser((id, done) => {
+  User.findById(id, (err, user) => {
+    done(err, user);
+  });
+});
+
+function isAuthenticated(req, res, next) {
+  if (req.isAuthenticated()) {
+    return next();
+  }
+  res.redirect('/login');
+}
+
+
+//schemas
+// const UserSchema = new mongoose.Schema({
+//   username: String,
+//   email: String,
+//   userId: String,
+//   phoneNumber: String,
+//   address: String,
+//   city: String,
+//   country: String,
+//   postalCode: String,
+//   resume: String,
+//   adhar: String,
+//   pan: String,
+//   password: String,
+//   photo: String,
+//   role: String,
+//   trainerType: String,
+//   skills: String,
+//   salary: String,
+//   bankAccounts: [
+//     {
+//       bankName: String,
+//       branchCode: String,
+//       accountNumber: String,
+//       ifscNumber: String,
+//     },
+//   ],
+// });
 const institutionSchema = new mongoose.Schema({
   collegeName: String,
   eamcetCode: String,
@@ -75,66 +135,102 @@ const institutionSchema = new mongoose.Schema({
   chairmanPhoneNumber: String,
 });
 
+
 const Institution = mongoose.model('Institution', institutionSchema);
-const User = mongoose.model('user', UserSchema);
+// const User = mongoose.model('user', UserSchema);
 
-//
-
-
-
-// // Registration route
-// app.post('/register', async (req, res) => {
-//   try {
-//     const { username, email, password } = req.body;
-//     const existingUser = await User.findOne({ email: email });
-
-//     if (existingUser) {
-//       return res.status(400).json({ message: 'Email already in use' });
-//     }
-
-//     // Encrypt the password before storing it
-//     const saltRounds = 10;
-//     const hashedPassword = await bcrypt.hash(password, saltRounds);
-
-//     const newUser = new User({
-//       username,
-//       email,
-//       password: hashedPassword, // Store the hashed password
-//       role: 'admin',
-//       userId: '1001',
-//     });
-//     await newUser.save();
-
-//     return res.status(200).json({ message: 'User registered successfully' });
-//   } catch (error) {
-//     return res.status(500).json({ message: 'Internal server error' });
-//   }
-// });
 
 
 app.get('/',(req,res)=>{
     res.send({Message:"Server is Live"});
 })
 
-app.post('/login', async (req, res) => {
-  try {
-    const { email, password } = req.body;
-    const user = await User.findOne({ email: email });
+
+
+app.post('/login', (req, res, next) => {
+  passport.authenticate('local', (err, user, info) => {
+    if (err) {
+      return res.status(500).json({ message: 'Internal server error' });
+    }
 
     if (!user) {
-      return res.status(400).json({ message: 'User not found' });
+      console.log('Failure redirect');
+      if (info && info.message === 'Incorrect username.') {
+        return res.status(401).json({ message: 'Username not found' });
+      }
+      return res.status(401).json({ message: 'password is incorrect' });
     }
-    const isPasswordMatch = await bcrypt.compare(password, user.password);
-
-    if (!isPasswordMatch) {
-      return res.status(400).json({ message: 'Incorrect password' });
+    const userRole = user.role || 'admin';
+    console.log(user.role,user);
+    if (userRole==+"2"){
+      userRole= "trainer";
     }
 
-    return res.status(200).json({ message: 'Login successful' });
-  } catch (error) {
-    return res.status(500).json({ message: 'Internal server error' });
-  }
+    console.log('User ID before session set:', user.id);
+    const payload = { userId: user.id, role: userRole };
+    const token = jwt.sign(payload, 'your-secret-key', { expiresIn: '1h' });
+    console.log(payload,token);
+    res.cookie('token', token, {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'strict',
+    });
+
+    console.log('Session data before setting userId:', req.session,req.session.id);
+
+    req.session.userId = user.id;
+
+    console.log('Session data after setting userId:', req.session);
+
+    return res.status(200).json({ token, message: 'Logged in' });
+  })(req, res, next);
 });
+
+
+const checkPermission = async (req, res, next) => {
+  const token = req.cookies.token || req.headers.authorization;
+
+  if (!token) {
+    return res.status(401).json({ message: 'Authentication required' });
+  }
+
+  try {
+    const tokenb = token.replace('Bearer ', '');
+    const decoded = jwt.verify(tokenb, 'your-secret-key');
+    const userRole = decoded.role; 
+    console.log(req.body,decoded);
+
+    // if (userRole === 'admin') {
+    //   return next();
+    // }
+    const resourcePath = req.body.url;
+    console.log("route path",resourcePath);
+
+    const resourcePermissions = await Permission.findOne({ page: resourcePath });
+    console.log("hi");
+    console.log(resourcePermissions,resourcePermissions[userRole],userRole,"jdcnjndcsdj");
+    console.log("hi");
+
+    if (!resourcePermissions) {
+      return res.status(403).json({ message: 'Access denied' });
+    }
+
+    if (userRole && resourcePermissions[userRole]) {
+      next();
+    } else {
+      res.status(403).json({ message: 'Access denied' });
+    }
+  } catch (error) {
+    console.log("ent");
+    res.status(401).json({ message: 'Invalid token' });
+  }
+};
+
+app.post('/page', checkPermission, (req, res) => {
+  res.status(200).json({ message: 'Access granted' });
+  console.log("entered");
+});
+
 
 
 app.post('/user/add', async (req, res) => {
@@ -218,6 +314,121 @@ app.post('/college/manage', async (req, res) => {
     // Send a response to the client
     res.json({ message: 'Data received successfully' });
   });
+const permissionSchema = new mongoose.Schema({
+  page: String,
+  admin: Boolean,
+  moderator: Boolean,
+  trainer: Boolean,
+});
+const Permission = mongoose.model('Permission', permissionSchema);
+
+app.get('/settings/system', async (req, res) => {
+  try {
+    console.log('setting - userId:', 'sessionID:', req.sessionID,req.session);
+
+    const permissions = await Permission.find({}).exec();
+    const permissionsMap = {};
+    permissions.forEach((permission) => {
+      permissionsMap[permission.page] = {
+        admin: permission.admin,
+        moderator: permission.moderator,
+        trainer: permission.trainer,
+      };
+    });
+    res.status(200).json(permissionsMap);
+  } catch (error) {
+    console.error('Error fetching permissions:', error);
+    res.status(500).json({ error: 'Failed to retrieve permissions' });
+  }
+});
+
+app.post('/settings/system', async (req, res) => {
+  try {
+    const { permissions } = req.body;
+
+    const permissionUpdates = Object.keys(permissions).map((page) => ({
+      updateOne: {
+        filter: { page },
+        update: {
+          admin: permissions[page].admin,
+          moderator: permissions[page].moderator,
+          trainer: permissions[page].trainer,
+        },
+      },
+    }));
+
+    await Permission.bulkWrite(permissionUpdates);
+
+    res.status(200).json({ message: 'Permissions updated successfully' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to update permissions' });
+  }
+});
+
+
+app.post('/pages', async (req, res) => {
+  const { page, admin, moderator, trainer } = req.body;
+  console.log(req.session.id);
+
+  try {
+    let existingPermission = await Permission.findOne({ page });
+
+    if (existingPermission) {
+      res.status(400).json({ error: 'Page already exists' });
+    } else {
+      const newPermission = new Permission({
+        page,
+        admin,
+        moderator,
+        trainer,
+      });
+      await newPermission.save();
+      res.status(201).json({ message: 'Page and permissions added successfully' });
+    }
+  } catch (error) {
+    console.error('Error adding page and permissions:', error);
+    res.status(500).json({ error: 'Failed to add page and permissions' });
+  }
+});
+
+app.get('/api/permissions', async (req, res) => {
+  try {
+    const { role } = req.query;
+
+    const permissions = await Permission.find({ [role]: true });
+
+    const allowedPages = permissions.map(permission => permission.page);
+console.log(permissions,allowedPages);
+
+    res.json(allowedPages);
+  } catch (error) {
+    console.error('Error fetching permissions:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+
+app.get('/logout', (req, res) => {
+  console.log('Before Logout - userId:', 'sessionID:', req.sessionID,req.session);
+  
+  res.cookie('token', '', { expires: new Date(0), httpOnly: true, secure: true, sameSite: 'strict' });
+  
+  req.session.destroy(err => {
+    if (err) {
+      console.error(err);
+      return res.send('Error occurred during logout');
+    }
+    
+    console.log('After Logout - userId:', 'sessionID:', req.sessionID,req.session);
+    
+    res.redirect('/');
+  });
+});
+
+
+
+
   
 app.listen(port, () => {
     console.log(`Server is running on port: ${port}`);
