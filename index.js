@@ -146,8 +146,35 @@ app.post('/login', async (req, res) => {
     if (!isPasswordMatch) {
       return res.status(400).json({ message: 'Incorrect password' });
     }
-
     return res.status(200).json({ message: 'Login successful' });
+  } catch (error) {
+    return res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+//change profile Details
+app.post('/change-password', async (req, res) => {
+  try {
+    const { email, currentPassword, newPassword } = req.body;
+    const user = await User.findOne({ email: email });
+
+    if (!user) {
+      return res.status(400).json({ message: 'User not found' });
+    }
+
+    const isPasswordMatch = await bcrypt.compare(currentPassword, user.password);
+
+    if (!isPasswordMatch) {
+      return res.status(400).json({ message: 'Current password is incorrect' });
+    }
+    const salt = bcrypt.genSaltSync(10);
+    const hashedPassword = bcrypt.hashSync(newPassword, salt);
+
+    // Update the user's password in the database
+    user.password = hashedPassword;
+    await user.save();
+
+    return res.status(200).json({ message: 'Password changed successfully' });
   } catch (error) {
     return res.status(500).json({ message: 'Internal server error' });
   }
