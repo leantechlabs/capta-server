@@ -135,9 +135,41 @@ const institutionSchema = new mongoose.Schema({
   chairmanPhoneNumber: String,
 });
 
+const CurriculumSchema = new mongoose.Schema({
+  
+  CurriculumName: String,
+  topics: [
+    {
+      Day: Number,
+      Topic: String,
+      'Sub Topic': String,
+      'Practice Programs': String,
+      Hours: Number,
+    },
+  ],
+});
+
+const ModuleSchema = new mongoose.Schema({
+  Curriculum : String,
+  ModuleName : String,
+  TotalHours : Number,
+  TotalDays:Number,
+  TotalBatches:Number,
+  StartDate:Date,
+  EndDate:Date,
+
+});
+
+
+
+
 
 const Institution = mongoose.model('Institution', institutionSchema);
 // const User = mongoose.model('user', UserSchema);
+const Curriculum = mongoose.model('Curriculum', CurriculumSchema);
+const Module = mongoose.model('Module' , ModuleSchema);
+
+
 
 
 
@@ -307,12 +339,25 @@ app.post('/college/manage', async (req, res) => {
     res.json({ message: 'Data received successfully' });
   });
 
-  app.post('/curriculum/create', (req, res) => {
-    // Print the received data to the console
-    console.log('Received data:', req.body);
+  app.post('/curriculum/create', async (req, res) => {
+    try {
+      const { CurriculumName, excelData } = req.body;
+      const newCurriculum = new Curriculum({ CurriculumName });
+      const savedTopics = [];
   
-    // Send a response to the client
-    res.json({ message: 'Data received successfully' });
+      for (const data of excelData) {
+        savedTopics.push(data); // No need to create a separate topic, directly push data.
+      }
+  
+      newCurriculum.topics = savedTopics;
+  
+      await newCurriculum.save();
+  
+      res.status(201).json({ message: 'Data received and saved successfully' });
+    } catch (error) {
+      console.error('Error saving curriculum data:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
   });
 const permissionSchema = new mongoose.Schema({
   page: String,
@@ -428,6 +473,100 @@ app.get('/logout', (req, res) => {
 
 
 
+
+  
+
+  app.post('/curriculum/manage', async (req, res) => {
+    try {
+      const curriculums = await Curriculum.find({}, '_id CurriculumName topics.Hours topics.Day');
+  
+      const curriculumsWithStats = curriculums.map((curriculum) => {
+        let totalHours = 0;
+        let totalDays = new Set(); //  Set to avoid duplicate days
+  
+        for (const topic of curriculum.topics) {
+          totalHours += topic.Hours;
+          totalDays.add(topic.Day); //  Set to collect unique days
+        }
+  
+        // Create a new object with the desired properties
+        return {
+          _id: curriculum._id,
+          CurriculumName: curriculum.CurriculumName,
+          TotalHours: totalHours,
+          TotalDays: totalDays.size, //  size of the Set to get the unique day count
+        };
+      });
+  
+      res.json(curriculumsWithStats);
+    } catch (error) {
+      console.error('Error fetching curriculums:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  });
+  
+
+  //Add a new route to fetch curriculum names
+  app.get('/curriculum/names' , async (req , res) => {
+    try {
+      const curriculumNames = await Curriculum.find({} , 'CurriculumName');
+      res.status(200).json(curriculumNames);
+    } catch (error) {
+      console.error('error fetching curriculum name : ' , error);
+      res.status(500).json({error : 'Internal server error'});
+    }
+  });
+
+  app.post('/module/create' , async (req , res) => {
+    try{
+      const {
+        Curriculum,
+        ModuleName,
+        TotalHours,
+        TotalDays,
+        TotalBatches,
+        StartDate,
+        EndDate,
+      } = req.body;
+
+      //Basic Input Validation
+      if (!Curriculum || !ModuleName || !TotalHours || !TotalDays || !TotalBatches || !StartDate || !EndDate) {
+        return res.status(400).json({ message: 'All fields are required' });
+      };
+      
+
+      const newModule = new Module({
+        Curriculum,
+        ModuleName,
+        TotalHours,
+        TotalDays,
+        TotalBatches,
+        StartDate,
+        EndDate,
+      });
+
+      await newModule.save();
+      res.status(201).json({message : 'Module created successfully'});
+    } catch(error){
+      console.error('Error creating module: ' , error)
+      res.status(500).json({message : 'Internal server error'});
+    }
+  });
+
+
+
+  app.post('/module/manage' , async (req , res) => {
+    try{
+      const modules =  await Module.find({} , '_id ModuleName TotalHours TotalDays TotalBatches StartDate EndDate');
+
+      res.json(modules);
+    } catch(error){
+      console.error('Error fetching module : ' , error);
+      res.status(500).json({error : 'Internal server error'})
+    }
+  });
+
+  
 
   
 app.listen(port, () => {
