@@ -7,8 +7,8 @@ const cors = require ('cors');
 const bcrypt = require ('bcryptjs');
 const { ObjectId } = require('mongodb');
 const  nanoid  = require('nanoid'); 
-
-
+const Institution = require('./models/college.model')
+const ReportCurriculum = require('./models/curriculum .report.model')
 const app = express();
 const port = process.env.PORT || 3001;
 dotenv.config(); 
@@ -143,7 +143,7 @@ const mouSchema = new mongoose.Schema({
 });
 
 
-const Institution = mongoose.model('Institution', institutionSchema);
+// const Institution = mongoose.model('Institution', institutionSchema);
 const User = mongoose.model('user', UserSchema);
 const Curriculum = mongoose.model('Curriculum', CurriculumSchema);
 const Module = mongoose.model('Module' , ModuleSchema);
@@ -467,7 +467,24 @@ app.post('/college/manage', async (req, res) => {
     }
   });
 
-
+  app.post('/report/curriculum',async (req,res)=>{
+    try {
+      const { selectedCurriculum, selectedFormat } = req.body;
+  
+      // Create a new curriculum report
+      const newCurriculum = new ReportCurriculum({
+        name: selectedCurriculum,
+        format: selectedFormat,
+      });
+  
+      // Save the curriculum report to the database
+      await newCurriculum.save();
+  
+      res.json({ message: 'Curriculum report saved successfully' });
+    } catch (error) {
+      res.status(500).json({ message: 'Internal server error' });
+    }
+  })
 
   app.post('/module/manage' , async (req , res) => {
     try{
@@ -480,6 +497,7 @@ app.post('/college/manage', async (req, res) => {
     }
   });
 
+  
   
 app.listen(port, () => {
     console.log(`Server is running on port: ${port}`);
