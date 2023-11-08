@@ -1,3 +1,4 @@
+
 const express = require ('express');
 const  dotenv= require ('dotenv') 
 const mongoose = require ('mongoose');
@@ -11,6 +12,7 @@ const  nanoid  = require('nanoid');
 const app = express();
 const port = process.env.PORT || 3001;
 dotenv.config(); 
+
 const corsOptions = {
   origin: process.env.ORIGIN,
   methods: 'GET, POST, PUT, DELETE',
@@ -26,6 +28,7 @@ const corsOptions = {
 app.use(bodyParser.json());
 app.use(cors()); //mongodb+srv://captadb:captadb@cluster0.9fiyo2y.mongodb.net/?retryWrites=true&w=majority
 const DBurl = "mongodb+srv://" + process.env.DB_NAME + ":" + process.env.DB_NAME + "@cluster0.9fiyo2y.mongodb.net/capta?retryWrites=true&w=majority";
+
 mongoose.connect(DBurl,{ useNewUrlParser: true, useUnifiedTopology: true });
 
 const db = mongoose.connection;
@@ -62,21 +65,6 @@ const UserSchema = new mongoose.Schema({
     },
   ],
 });
-const institutionSchema = new mongoose.Schema({
-  collegeName: String,
-  eamcetCode: String,
-  gstNumber: String,
-  panNumber: String,
-  email: String,
-  phoneNumber: String,
-  address: String,
-  city: String,
-  country: String,
-  postalCode: String,
-  chairmanName: String,
-  chairmanEmail: String,
-  chairmanPhoneNumber: String,
-});
 
 const CurriculumSchema = new mongoose.Schema({
   
@@ -102,6 +90,7 @@ const ModuleSchema = new mongoose.Schema({
   EndDate:Date,
 
 });
+
 
 
 const mouSchema = new mongoose.Schema({
@@ -270,8 +259,35 @@ app.post('/login', async (req, res) => {
     if (!isPasswordMatch) {
       return res.status(400).json({ message: 'Incorrect password' });
     }
-
     return res.status(200).json({ message: 'Login successful' });
+  } catch (error) {
+    return res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+//change profile Details
+app.post('/change-password', async (req, res) => {
+  try {
+    const { email, currentPassword, newPassword } = req.body;
+    const user = await User.findOne({ email: email });
+
+    if (!user) {
+      return res.status(400).json({ message: 'User not found' });
+    }
+
+    const isPasswordMatch = await bcrypt.compare(currentPassword, user.password);
+
+    if (!isPasswordMatch) {
+      return res.status(400).json({ message: 'Current password is incorrect' });
+    }
+    const salt = bcrypt.genSaltSync(10);
+    const hashedPassword = bcrypt.hashSync(newPassword, salt);
+
+    // Update the user's password in the database
+    user.password = hashedPassword;
+    await user.save();
+
+    return res.status(200).json({ message: 'Password changed successfully' });
   } catch (error) {
     return res.status(500).json({ message: 'Internal server error' });
   }
@@ -327,10 +343,10 @@ app.post('/college/add', async (req, res) => {
     const institutionData = req.body;
     const newInstitution = new Institution(institutionData);
     await newInstitution.save();
-    res.status(200).json({ message: 'Institution added successfully' });
+    res.status(200).json({ message: "Institution added successfully" });
   } catch (error) {
     // console.error('Error adding institution:', error);
-    res.status(500).json({error: 'Internal server error' });
+    res.status(500).json({ error: "Internal server error" });
   }
 });
 app.post('/college/manage', async (req, res) => {
