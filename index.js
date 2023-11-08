@@ -45,11 +45,11 @@ app.use(passport.initialize());
 app.use(passport.session());
 
 
-const User = mongoose.model('User', new mongoose.Schema({
-  email: String,
-  password: String,
-  role:String,
-}));
+// const User = mongoose.model('User', new mongoose.Schema({
+//   email: String,
+//   password: String,
+//   role:String,
+// }));
 passport.use(new LocalStrategy({
   usernameField: 'email', 
   passwordField: 'password' 
@@ -91,34 +91,34 @@ function isAuthenticated(req, res, next) {
 }
 
 
-//schemas
-// const UserSchema = new mongoose.Schema({
-//   username: String,
-//   email: String,
-//   userId: String,
-//   phoneNumber: String,
-//   address: String,
-//   city: String,
-//   country: String,
-//   postalCode: String,
-//   resume: String,
-//   adhar: String,
-//   pan: String,
-//   password: String,
-//   photo: String,
-//   role: String,
-//   trainerType: String,
-//   skills: String,
-//   salary: String,
-//   bankAccounts: [
-//     {
-//       bankName: String,
-//       branchCode: String,
-//       accountNumber: String,
-//       ifscNumber: String,
-//     },
-//   ],
-// });
+schemas
+const UserSchema = new mongoose.Schema({
+  username: String,
+  email: String,
+  userId: String,
+  phoneNumber: String,
+  address: String,
+  city: String,
+  country: String,
+  postalCode: String,
+  resume: String,
+  adhar: String,
+  pan: String,
+  password: String,
+  photo: String,
+  role: String,
+  trainerType: String,
+  skills: String,
+  salary: String,
+  bankAccounts: [
+    {
+      bankName: String,
+      branchCode: String,
+      accountNumber: String,
+      ifscNumber: String,
+    },
+  ],
+});
 const institutionSchema = new mongoose.Schema({
   collegeName: String,
   eamcetCode: String,
@@ -165,7 +165,7 @@ const ModuleSchema = new mongoose.Schema({
 
 
 const Institution = mongoose.model('Institution', institutionSchema);
-// const User = mongoose.model('user', UserSchema);
+const User = mongoose.model('user', UserSchema);
 const Curriculum = mongoose.model('Curriculum', CurriculumSchema);
 const Module = mongoose.model('Module' , ModuleSchema);
 
@@ -211,7 +211,7 @@ app.post('/login', (req, res, next) => {
     console.log('Session data before setting userId:', req.session,req.session.id);
 
     req.session.userId = user.id;
-
+    req.session.userRole = user.role; 
     console.log('Session data after setting userId:', req.session);
 
     return res.status(200).json({ token, message: 'Logged in' });
@@ -229,7 +229,8 @@ const checkPermission = async (req, res, next) => {
   try {
     const tokenb = token.replace('Bearer ', '');
     const decoded = jwt.verify(tokenb, 'your-secret-key');
-    const userRole = decoded.role; 
+    // const userRole = decoded.role; 
+    const userRole=req.
     console.log(req.body,decoded);
 
     // if (userRole === 'admin') {
