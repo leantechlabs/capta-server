@@ -1,15 +1,18 @@
-import dotenv from 'dotenv'
-dotenv.config(); 
-import express from 'express';
-import mongoose from 'mongoose';
-import bodyParser from 'body-parser';
-import cors from 'cors';
-import bcrypt from 'bcryptjs';
-import Institution from './models/college.model.js';
+
+const express = require ('express');
+const  dotenv= require ('dotenv') 
+const mongoose = require ('mongoose');
+const  bodyParser = require ('body-parser');
+const cors = require ('cors');
+const bcrypt = require ('bcryptjs');
+const { ObjectId } = require('mongodb');
+const  nanoid  = require('nanoid'); 
+
 
 const app = express();
-// const port = process.env.PORT || 3000;
-const port = 3000
+const port = process.env.PORT || 3001;
+dotenv.config(); 
+
 const corsOptions = {
   origin: process.env.ORIGIN,
   methods: 'GET, POST, PUT, DELETE',
@@ -89,13 +92,123 @@ const ModuleSchema = new mongoose.Schema({
 });
 
 
+
+const mouSchema = new mongoose.Schema({
+  MOUID: String,
+  Date: {
+    type: String,
+    default: Date.now
+  },
+  Location: {
+    type: String,
+  },
+  FirstParty: {
+    Name: String,
+    Address: String,
+    Representative: String,
+    Contact: String,
+  },
+  SecondParty: {
+    Name: String,
+    Location: String,
+    Representative: String,
+  },
+  TermsConditions: {
+    NatureOfRelationship: String,
+    MutualObligation: String,
+    LimitationsAndWarranties: String,
+  },
+  PurposeScope: {
+    Details: String,
+    CollaborationPeriod: String,
+    OtherDetails: String,
+  },
+  PaymentTerms: {
+    AmountPerStudent: Number,
+    FirstInstallment: Number,
+    SecondInstallment: Number,
+    ThirdInstallment: Number,
+    FinalInstallment: Number,
+    PaymentMethod: String,
+  },
+  Termination: {
+    TerminationConditions: String,
+    PaymentDue: String,
+  },
+  Confirmation: {
+    Cdate: String,
+    CStatus: String,
+    Comments:String,
+  },
+});
+
+
+const Institution = mongoose.model('Institution', institutionSchema);
 const User = mongoose.model('user', UserSchema);
 const Curriculum = mongoose.model('Curriculum', CurriculumSchema);
 const Module = mongoose.model('Module' , ModuleSchema);
+const MOU = mongoose.model('MOU', mouSchema);
+
+
+////
 
 
 
-//
+app.post('/mou/create', async (req, res) => {
+  try {
+    // Generate a unique random MOUID
+    let uniqueMOUID;
+    let isUnique = false;
+
+    while (!isUnique) {
+      uniqueMOUID = nanoid(6); // Generate a random 6-character MOUID
+      // Check if the generated MOUID is unique
+      const existingMOU = await MOU.findOne({ MOUID: uniqueMOUID });
+      if (!existingMOU) {
+        isUnique = true;
+      }
+    }
+
+    // Create a new MOU document with the generated MOUID
+    const newmouSchema = new MOU({
+      MOUID: uniqueMOUID,
+      // Other fields here
+    });
+
+    newmouSchema.Confirmation.Cdate = null;
+    newmouSchema.Confirmation.CStatus = null;
+    newmouSchema.Confirmation.Comments = null;
+
+    await newmouSchema.save();
+    res.status(200).send({
+      message: "MOU Created Successfully",
+      success: true,
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).send({
+      success: false,
+      message: `MOU Creation Error ${error.message}`,
+    });
+  }
+});
+
+// app.post("/mou/confirm",async(req,res)=>{
+//     try {
+//         const newMouConf = new MOUConfi(req.body);
+//         await newMouConf.save()
+//         res.status(200).send({
+//             message: "MOU Confirmation Sucessfully",
+//             success:false,
+//         });
+//     } catch (error) {
+//         console.log(error);
+//         res.status(500).send({
+//             success:false,
+//             message:`MOU Confirmation Error ${error.message}`
+//         });
+//     }
+// })
 
 
 
@@ -366,8 +479,6 @@ app.post('/college/manage', async (req, res) => {
       res.status(500).json({error : 'Internal server error'})
     }
   });
-
-  
 
   
 app.listen(port, () => {
