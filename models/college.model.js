@@ -1,4 +1,4 @@
-import mongoose from 'mongoose';
+const mongoose = require('mongoose');
 const institutionSchema = new mongoose.Schema({
     collegeName: String,
     eamcetCode: String,
@@ -15,8 +15,8 @@ const institutionSchema = new mongoose.Schema({
     chairmanPhoneNumber: Number,
   },
   { timestamps: true }
-  );
-  
-  const Institution = mongoose.model('Institution', institutionSchema);
-  
-  export default Institution
+);
+
+const Institution = mongoose.model('Institution', institutionSchema);
+
+module.exports = Institution;
