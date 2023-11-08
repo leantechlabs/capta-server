@@ -1,19 +1,56 @@
-// const router = require('express').Router();
-// const User = require('../models/user.model');
+const express = require('express');
+const bcrypt = require('bcryptjs');
+const User = require('../models/user.model');
 
-// router.route('/add').post((req, res) => {
-//     const username = req.body.username;
-//     const newUser = new User({ username });
+const router = express.Router();
 
-//     newUser.save()
-//         .then(() => res.json('User added!'))
-//         .catch(err => res.status(400).json('Error: ' + err));
-// });
+router.post('/register', async (req, res) => {
+  // User registration logic here
+  // ...
+});
 
-// router.route('/manage').get((req, res) => {
-//     User.find()
-//         .then(users => res.json(users))
-//         .catch(err => res.status(400).json('Error: ' + err));
-// });
+router.post('/add', async (req, res) => {
+  const userData = req.body;
+  const email= req.body.email;
+  const existingUser = await User.findOne({ email: email });
+  try {
+    if (existingUser) {
+      return res.status(400).json({ message: 'Email already in use' });
+        }
 
-// module.exports = router;
+    if (!userData.trainerType){
+      userData.role="1"
+    }else{
+      userData.role="2"
+    }
+    if (!userData.password) {
+      userData.password = 'Capta@123';
+    }
+    const saltRounds = 10; 
+    const hashedPassword = await bcrypt.hash(userData.password, saltRounds);
+
+    const newUser = new User({
+      ...userData,
+      password: hashedPassword,
+    });
+    await newUser.save();
+
+    res.status(200).json({ message: 'User added successfully' });
+  } catch (error) {
+    console.error('Error adding user:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+router.post('/manage', async (req, res) => {
+  try {
+    // Exclude users with the role "admin"
+    const users = await User.find({ role: { $ne: 'admin' } }, { password: 0 });
+    res.json(users);
+  } catch (error) {
+    console.error('Error fetching users:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+module.exports = router;
