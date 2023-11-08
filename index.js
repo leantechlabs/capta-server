@@ -1,21 +1,18 @@
-import dotenv from 'dotenv'
-dotenv.config(); 
-import express from 'express';
-import mongoose, { connect } from 'mongoose';
-import bodyParser from 'body-parser';
-import cors from 'cors';
-import bcrypt from 'bcryptjs';
-import session from 'express-session';
-import flash from 'connect-flash';
-// import passport from './routes/auth';
-import passport from 'passport';
-import { Strategy as LocalStrategy } from 'passport-local';
-import jwt from 'jsonwebtoken'; 
-import cookieParser from 'cookie-parser'; 
+
+const express = require ('express');
+const  dotenv= require ('dotenv') 
+const mongoose = require ('mongoose');
+const  bodyParser = require ('body-parser');
+const cors = require ('cors');
+const bcrypt = require ('bcryptjs');
+const { ObjectId } = require('mongodb');
+const  nanoid  = require('nanoid'); 
 
 
 const app = express();
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 3001;
+dotenv.config(); 
+
 const corsOptions = {
   origin: process.env.ORIGIN,
   methods: 'GET, POST, PUT, DELETE',
@@ -31,6 +28,7 @@ app.use(bodyParser.json());
 app.use(session({ secret: 'your-secret-key', resave: false, saveUninitialized: true }));
 app.use(cors({ origin: 'http://localhost:3000', credentials: true })); //mongodb+srv://captadb:captadb@cluster0.9fiyo2y.mongodb.net/?retryWrites=true&w=majority
 const DBurl = "mongodb+srv://" + process.env.DB_NAME + ":" + process.env.DB_NAME + "@cluster0.9fiyo2y.mongodb.net/capta?retryWrites=true&w=majority";
+
 mongoose.connect(DBurl,{ useNewUrlParser: true, useUnifiedTopology: true });
 
 const db = mongoose.connection;
@@ -82,6 +80,7 @@ passport.deserializeUser((id, done) => {
     done(err, user);
   });
 });
+
 
 function isAuthenticated(req, res, next) {
   if (req.isAuthenticated()) {
@@ -162,15 +161,125 @@ const ModuleSchema = new mongoose.Schema({
 
 
 
+const mouSchema = new mongoose.Schema({
+  MOUID: String,
+  Date: {
+    type: String,
+    default: Date.now
+  },
+  Location: {
+    type: String,
+  },
+  FirstParty: {
+    Name: String,
+    Address: String,
+    Representative: String,
+    Contact: String,
+  },
+  SecondParty: {
+    Name: String,
+    Location: String,
+    Representative: String,
+  },
+  TermsConditions: {
+    NatureOfRelationship: String,
+    MutualObligation: String,
+    LimitationsAndWarranties: String,
+  },
+  PurposeScope: {
+    Details: String,
+    CollaborationPeriod: String,
+    OtherDetails: String,
+  },
+  PaymentTerms: {
+    AmountPerStudent: Number,
+    FirstInstallment: Number,
+    SecondInstallment: Number,
+    ThirdInstallment: Number,
+    FinalInstallment: Number,
+    PaymentMethod: String,
+  },
+  Termination: {
+    TerminationConditions: String,
+    PaymentDue: String,
+  },
+  Confirmation: {
+    Cdate: String,
+    CStatus: String,
+    Comments:String,
+  },
+});
 
 
 const Institution = mongoose.model('Institution', institutionSchema);
 // const User = mongoose.model('user', UserSchema);
 const Curriculum = mongoose.model('Curriculum', CurriculumSchema);
 const Module = mongoose.model('Module' , ModuleSchema);
+const MOU = mongoose.model('MOU', mouSchema);
+
+
+////
 
 
 
+app.post('/mou/create', async (req, res) => {
+  try {
+    // Generate a unique random MOUID
+    let uniqueMOUID;
+    let isUnique = false;
+
+    while (!isUnique) {
+      uniqueMOUID = nanoid(6); // Generate a random 6-character MOUID
+      // Check if the generated MOUID is unique
+      const existingMOU = await MOU.findOne({ MOUID: uniqueMOUID });
+      if (!existingMOU) {
+        isUnique = true;
+      }
+    }
+
+    // Create a new MOU document with the generated MOUID
+    const newmouSchema = new MOU({
+      MOUID: uniqueMOUID,
+      // Other fields here
+    });
+
+    newmouSchema.Confirmation.Cdate = null;
+    newmouSchema.Confirmation.CStatus = null;
+    newmouSchema.Confirmation.Comments = null;
+
+    await newmouSchema.save();
+    res.status(200).send({
+      message: "MOU Created Successfully",
+      success: true,
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).send({
+      success: false,
+      message: `MOU Creation Error ${error.message}`,
+    });
+  }
+});
+
+// <<<<<<< main
+// =======
+// // app.post("/mou/confirm",async(req,res)=>{
+// //     try {
+// //         const newMouConf = new MOUConfi(req.body);
+// //         await newMouConf.save()
+// //         res.status(200).send({
+// //             message: "MOU Confirmation Sucessfully",
+// //             success:false,
+// //         });
+// //     } catch (error) {
+// //         console.log(error);
+// //         res.status(500).send({
+// //             success:false,
+// //             message:`MOU Confirmation Error ${error.message}`
+// //         });
+// //     }
+// // })
+// >>>>>>> main
 
 
 app.get('/',(req,res)=>{
@@ -252,6 +361,7 @@ const checkPermission = async (req, res, next) => {
     } else {
       res.status(403).json({ message: 'Access denied' });
     }
+
   } catch (error) {
     console.log("ent");
     res.status(401).json({ message: 'Invalid token' });
@@ -261,6 +371,34 @@ const checkPermission = async (req, res, next) => {
 app.post('/page', checkPermission, (req, res) => {
   res.status(200).json({ message: 'Access granted' });
   console.log("entered");
+});
+
+//change profile Details
+app.post('/change-password', async (req, res) => {
+  try {
+    const { email, currentPassword, newPassword } = req.body;
+    const user = await User.findOne({ email: email });
+
+    if (!user) {
+      return res.status(400).json({ message: 'User not found' });
+    }
+
+    const isPasswordMatch = await bcrypt.compare(currentPassword, user.password);
+
+    if (!isPasswordMatch) {
+      return res.status(400).json({ message: 'Current password is incorrect' });
+    }
+    const salt = bcrypt.genSaltSync(10);
+    const hashedPassword = bcrypt.hashSync(newPassword, salt);
+
+    // Update the user's password in the database
+    user.password = hashedPassword;
+    await user.save();
+
+    return res.status(200).json({ message: 'Password changed successfully' });
+  } catch (error) {
+    return res.status(500).json({ message: 'Internal server error' });
+  }
 });
 
 
@@ -314,10 +452,10 @@ app.post('/college/add', async (req, res) => {
     const institutionData = req.body;
     const newInstitution = new Institution(institutionData);
     await newInstitution.save();
-    res.status(200).json({ message: 'Institution added successfully' });
+    res.status(200).json({ message: "Institution added successfully" });
   } catch (error) {
     // console.error('Error adding institution:', error);
-    res.status(500).json({error: 'Internal server error' });
+    res.status(500).json({ error: "Internal server error" });
   }
 });
 app.post('/college/manage', async (req, res) => {
@@ -565,8 +703,6 @@ app.get('/logout', (req, res) => {
       res.status(500).json({error : 'Internal server error'})
     }
   });
-
-  
 
   
 app.listen(port, () => {

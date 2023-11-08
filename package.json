@@ -3,7 +3,6 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
-  "type": "module",
   "scripts": {
     "start": "node index.js",
     "dev": "nodemon index.js",
@@ -30,9 +29,10 @@
     "express-session": "^1.17.3",
     "jsonwebtoken": "^9.0.2",
     "mongodb": "^6.1.0",
-    "mongoose": "^7.6.4",
     "passport": "^0.6.0",
     "passport-local": "^1.0.0"
+    "mongoose": "^7.6.3",
+    "nanoid": "^2.1.8"
   },
   "devDependencies": {
     "nodemon": "^3.0.1"
