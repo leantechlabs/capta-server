@@ -107,7 +107,7 @@ console.log(req.session);
 
   });
 });
-
+//changing password
 router.post('/change-password', async (req, res) => {
   try {
     const { email, currentPassword, newPassword } = req.body;
