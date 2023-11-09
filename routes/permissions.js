@@ -142,7 +142,7 @@ router.get('/api/permissions', async (req, res) => {
     const permissions = await Permission.find({ [role]: true });
 
     const allowedPages = permissions.map(permission => permission.page);
-console.log(permissions,allowedPages);
+console.log(allowedPages);
 
     res.json(allowedPages);
   } catch (error) {
