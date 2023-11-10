@@ -64,31 +64,36 @@ router.post('/login', (req, res, next) => {
       return res.status(401).json({ message: 'Password is incorrect' });
     }
 
-    const userRole = user.role || 'admin';
-    if (userRole === '2') {
+    let userRole =user.role ;
+    console.log(userRole);
+    if (userRole === '1') {
+      userRole = 'moderator';
+      console.log("esrfduserRole");
+
+    } else if (userRole === '2') {
       userRole = 'trainer';
+      console.log("userRole");
+
     }
+    console.log(userRole);
+
     req.session.userId = user.id;
     req.session.userRole = user.role;
 
-    req.session.save(err => {
-      if (err) {
-        return res.status(500).json({ message: 'Error saving session', err });
-      }
-console.log(req.session);
-      const payload = { userId: user.id, role: user.role };
-      const token = jwt.sign(payload, 'your-secret-key', { expiresIn: '1h' });
+    console.log(req.session);
+    const payload = { userId: user.id, role: userRole };
+    const token = jwt.sign(payload, 'your-secret-key', { expiresIn: '1h' });
 
-      res.cookie('token', token, {
-        httpOnly: true,
-        secure: true,
-        sameSite: 'strict',
-      });
-
-      res.status(200).json({ token, message: 'Logged in' });
+    res.cookie('token', token, {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'strict',
     });
+
+    res.status(200).json({ token, message: 'Logged in' });
   })(req, res, next);
 });
+
 
 router.get('/logout', (req, res) => {
   res.cookie('token', '', { expires: new Date(0), httpOnly: true, secure: true, sameSite: 'strict' });
@@ -102,7 +107,7 @@ console.log(req.session);
 
   });
 });
-
+//changing password
 router.post('/change-password', async (req, res) => {
   try {
     const { email, currentPassword, newPassword } = req.body;
