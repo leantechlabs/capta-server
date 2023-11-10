@@ -14,9 +14,9 @@ router.post('/add', async (req, res) => {
   const email= req.body.email;
   const existingUser = await User.findOne({ email: email });
   try {
-    if (existingUser) {
-      return res.status(400).json({ message: 'Email already in use' });
-        }
+    // if (existingUser) {
+    //   return res.status(400).json({ message: 'Email already in use' });
+    //     }
 
     if (!userData.trainerType){
       userData.role="1"

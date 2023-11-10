@@ -25,6 +25,7 @@ const mouSchema = new mongoose.Schema({
     MutualObligation: String,
     LimitationsAndWarranties: String,
   },
+  General:{type:String},
   PurposeScope: {
     Details: String,
     CollaborationPeriod: String,
@@ -49,4 +50,4 @@ const mouSchema = new mongoose.Schema({
   },
 });
 
-const MOU = mongoose.model('MOU', mouSchema);
+const Mou = mongoose.model('MOU', mouSchema);
