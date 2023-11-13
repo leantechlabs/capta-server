@@ -10,7 +10,7 @@ router.post('/create', async (req, res) => {
     const savedTopics = [];
 
     for (const data of excelData) {
-      savedTopics.push(data); // No need to create a separate topic, directly push data.
+      savedTopics.push(data); 
     }
 
     newCurriculum.topics = savedTopics;

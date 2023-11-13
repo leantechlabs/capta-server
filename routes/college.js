@@ -10,7 +10,6 @@ router.post('/add', async (req, res) => {
     await newInstitution.save();
     res.status(200).json({ message: "Institution added successfully" });
   } catch (error) {
-    // console.error('Error adding institution:', error);
     res.status(500).json({ error: "Internal server error" });
   }
 });
@@ -18,12 +17,13 @@ router.post('/add', async (req, res) => {
 router.post('/manage', async (req, res) => {
   try {
     const colleges = await Institution.find({}, 'collegeName eamcetCode email phoneNumber');
-
     res.json(colleges);
   } catch (error) {
     console.error('Error fetching colleges:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
+
+
 
 module.exports = router;
