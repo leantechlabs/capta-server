@@ -15,7 +15,7 @@ const cookieParser = require('cookie-parser');
 const collegeRoutes =require('./routes/college');
 const CurriculumRoutes =require('./routes/curriculum');
 const authRoutes = require('./routes/auth');
-const permisionRoutes = require('./routes/permissions');
+// const permisionRoutes = require('./routes/permissions');
 const reportRoutes = require('./routes/reportSession')
 const mouRoutes = require('./routes/mou'); 
 const userRoutes = require('./routes/user');
@@ -60,7 +60,7 @@ app.get('/',(req,res)=>{
 })
 
 app.use('/auth', authRoutes);
-app.use('/permision', permisionRoutes);
+// app.use('/permision', permisionRoutes);
 app.use('/mou', mouRoutes);
 app.use('/user', userRoutes);
 app.use('/college', collegeRoutes);

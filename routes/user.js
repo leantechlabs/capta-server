@@ -37,7 +37,7 @@ router.post('/add', async (req, res) => {
 });
 
 
-router.post('/manage', async (req, res) => {
+router.get('/manage', async (req, res) => {
   try {
     const users = await User.find({ role: { $ne: 'admin' } }, { password: 0 });
     res.json(users);
@@ -47,15 +47,46 @@ router.post('/manage', async (req, res) => {
   }
 });
 
-
 router.post('/edit', async (req, res) => {
   try {
-    const useremail = req.body.email;
-    const users = await User.find({ email:useremail});
-    res.json(users);
+    const userEmail = req.query.email;
+    console.log(userEmail)
+    if (!userEmail) {
+      return res.status(400).json({ error: 'Email parameter is required' });
+    }
+    const user = await User.findOne({ email: userEmail });
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }else{
+      res.json(user);
+    }
+
+
   } catch (error) {
-    console.error('Error fetching users:', error);
+    console.error('Error fetching user:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
+router.post('/update', async (req, res) => {
+  try {
+    const userEmail = req.body.email;
+    console.log(userEmail);
+    if (!userEmail) {
+      return res.status(400).json({ error: 'Email parameter is required' });
+    }
+    const updatedUserData = req.body;
+    const user = await User.findOneAndUpdate({ email: userEmail }, updatedUserData, { new: true });
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }else{
+      res.status(200).json({message:"User Updated"});
+    }
+   
+  } catch (error) {
+    console.error('Error updating user:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 module.exports = router;
