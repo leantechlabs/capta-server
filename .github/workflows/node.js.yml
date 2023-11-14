@@ -18,3 +18,4 @@ jobs:
           key: ${{secrets.SERVER_KEY}}
           script: |
             ./update_backend.sh
+
