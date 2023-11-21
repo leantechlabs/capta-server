@@ -56,7 +56,7 @@ app.use(passport.session());
 
 
 app.get('/',(req,res)=>{
-    res.send({Message:"Server is Live"});
+    res.send({Message:"Server is Live :: "});
 })
 
 app.use('/auth', authRoutes);
