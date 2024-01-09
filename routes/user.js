@@ -89,4 +89,28 @@ router.post('/update', async (req, res) => {
   }
 });
 
+router.delete('/delete', async (req, res) => {
+  try {
+    const userEmail = req.query.email;
+    console.log(userEmail);
+
+    if (!userEmail) {
+      return res.status(400).json({ error: 'Email parameter is required' });
+    }
+
+    const user = await User.findOneAndDelete({ email: userEmail });
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    } else {
+      res.status(200).json({ message: 'User deleted successfully' });
+    }
+
+  } catch (error) {
+    console.error('Error deleting user:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+
 module.exports = router;
