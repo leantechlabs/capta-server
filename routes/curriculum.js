@@ -1,10 +1,10 @@
 const express = require('express');
 const Curriculum = require('../models/curriculum.model');
-
 const router = express.Router();
 
 router.post('/create', async (req, res) => {
   try {
+    console.log(req.body)
     const { CurriculumName, excelData } = req.body;
     const newCurriculum = new Curriculum({ CurriculumName });
     const savedTopics = [];

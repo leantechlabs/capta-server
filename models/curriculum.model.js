@@ -14,4 +14,5 @@ const CurriculumSchema = new mongoose.Schema({
   ],
 });
 
-const Curriculum = mongoose.model('Curriculum', CurriculumSchema);
+const Curriculum = mongoose.model('curriculums', CurriculumSchema);
+module.exports = Curriculum;
